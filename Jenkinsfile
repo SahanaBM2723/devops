@@ -1,27 +1,51 @@
 pipeline {
     agent any
 
+    environment {
+        ENVIRONMENT = "dev" // Default environment
+    }
+
+    parameters {
+        choice(name: 'ENVIRONMENT', choices: ['dev', 'test'], description: 'Choose environment')
+    }
+
     stages {
-        stage('Build') {
+        stage('Checkout') {
             steps {
-                echo "Building the project..."
-                sh 'echo Build completed'
+                echo "Checking out source code..."
+                checkout scm
             }
         }
 
-        stage('Test') {
+        stage('Build Docker Images') {
             steps {
-                echo "Running tests..."
-                sh 'echo Tests passed'
+                echo "Building Docker containers for ${params.ENVIRONMENT} environment..."
+                sh "docker-compose -f docker-compose.${params.ENVIRONMENT}.yml build"
             }
         }
 
-        stage('Archive') {
+        stage('Run Docker Containers') {
             steps {
-                echo "Archiving..."
+                echo "Running Docker containers for ${params.ENVIRONMENT} environment..."
+                sh "docker-compose -f docker-compose.${params.ENVIRONMENT}.yml up -d"
+            }
+        }
+
+        stage('Verify') {
+            steps {
+                echo "Listing running Docker containers..."
+                sh "docker ps"
             }
         }
     }
+
+    post {
+        always {
+            echo "Cleaning up..."
+            sh "docker-compose -f docker-compose.${params.ENVIRONMENT}.yml down"
+        }
+    }
 }
+
 
 
