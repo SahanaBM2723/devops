@@ -18,7 +18,7 @@ pipeline {
 
         stage('Archive') {
             steps {
-                archiveArtifacts artifacts: '**/*.txt', fingerprint: true
+                echo "Archiving..."
             }
         }
     }
